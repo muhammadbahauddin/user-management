@@ -140,7 +140,8 @@ curl -X POST http://localhost:8080/users \
 | `Database/Migrations/…CreateUsersTable.php` | Table schema, including a **unique index on `email`** |
 | `Database/Seeds/UserSeeder.php` | 12 fixed sample users, inserted through the model so they pass the same validation |
 | `Models/UserModel.php` | Query Builder access, allowed fields, type casts and **all validation rules** |
-| `Controllers/Users.php` | Thin controller: reads the request, calls the model, maps the result to an HTTP status |
+| `Services/UserService.php` | Use cases (list, find, create, update, delete), with no HTTP code, so a future CLI or cron job can reuse them. Registered as `service('userService')` in `Config/Services.php` |
+| `Controllers/Users.php` | Thin controller: reads the request, calls `UserService`, maps the result to an HTTP status |
 | `Config/Routes.php` | Explicit routes (`(:num)` ids only), CORS filter, `OPTIONS` preflight routes |
 | `Config/Cors.php` | Allowed origins read from `CORS_ALLOWED_ORIGINS` in `.env` |
 
@@ -163,6 +164,7 @@ curl -X POST http://localhost:8080/users \
 - **Gender** is limited to `male`, `female`, `other`, and validated on both sides. It is stored as `VARCHAR` rather than `ENUM`, so adding an option needs no schema change.
 - **Age** must be a whole number from 1 to 120. **Telephone** is free-form but limited to phone characters, because international formats vary.
 - **Email uniqueness is enforced twice:** by the model's `is_unique` rule, which returns a friendly 422, and by a unique index in the database, which still protects against two requests arriving at the same moment.
+- **Layers:** controller (HTTP only) → `UserService` (use cases and future business rules) → `UserModel` (data access and validation rules) → database constraints. A scheduled job would call `UserService` directly.
 - **Validation lives in the model**, so every caller (API, seeder, a future CLI job) uses the same rules. The client-side rules are only for fast feedback; the server is the source of truth.
 - **`PUT` is a full replacement:** all required fields must be sent. `PATCH` is not exposed.
 - **Mass-assignment protection:** only the six user fields in `$allowedFields` can be written. Fields like `id` or `created_at` sent by a client are ignored.

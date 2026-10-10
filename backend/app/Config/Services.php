@@ -2,6 +2,8 @@
 
 namespace Config;
 
+use App\Models\UserModel;
+use App\Services\UserService;
 use CodeIgniter\Config\BaseService;
 
 /**
@@ -29,4 +31,18 @@ class Services extends BaseService
      *     return new \CodeIgniter\Example();
      * }
      */
+
+    /**
+     * User use cases, shared by the API controller and any CLI command.
+     * Building it here (instead of with `new` in each caller) gives one place
+     * to wire its dependencies and lets tests swap it out.
+     */
+    public static function userService(bool $getShared = true): UserService
+    {
+        if ($getShared) {
+            return static::getSharedInstance('userService');
+        }
+
+        return new UserService(new UserModel());
+    }
 }

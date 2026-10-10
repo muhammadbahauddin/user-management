@@ -2,43 +2,48 @@
 
 namespace App\Controllers;
 
-use App\Models\UserModel;
+use App\Services\Exceptions\ValidationFailedException;
+use App\Services\UserService;
+use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use CodeIgniter\RESTful\ResourceController;
+use Psr\Log\LoggerInterface;
 
 /**
  * JSON REST API for users.
  *
- * The controller stays thin: read the request, call the model, map the
- * outcome to an HTTP status. Validation rules live in UserModel.
+ * The controller only does HTTP: read the request, call UserService, map the
+ * outcome to a status code. Business logic lives in UserService and the
+ * validation rules in UserModel, so a CLI job can reuse them without HTTP.
  *
  * Error responses always use the same shape so the frontend can rely on it:
  *   { "message": "...", "errors": { "field": "problem" } }
  */
 class Users extends ResourceController
 {
-    protected $modelName = UserModel::class;
-    protected $format    = 'json';
+    protected $format = 'json';
 
-    /** @var UserModel */
-    protected $model;
+    private UserService $users;
+
+    public function initController(RequestInterface $request, ResponseInterface $response, LoggerInterface $logger)
+    {
+        parent::initController($request, $response, $logger);
+
+        $this->users = service('userService');
+    }
 
     /** GET /users -> 200 */
     public function index(): ResponseInterface
     {
-        return $this->respond($this->model->orderBy('id', 'ASC')->findAll());
+        return $this->respond($this->users->list());
     }
 
     /** GET /users/{id} -> 200 | 404 */
     public function show($id = null): ResponseInterface
     {
-        $user = $this->model->find($id);
+        $user = $this->users->find((int) $id);
 
-        if ($user === null) {
-            return $this->notFound($id);
-        }
-
-        return $this->respond($user);
+        return $user === null ? $this->notFound($id) : $this->respond($user);
     }
 
     /** POST /users -> 201 | 422 */
@@ -50,21 +55,17 @@ class Users extends ResourceController
             return $this->invalidJson();
         }
 
-        unset($data['id']); // the database assigns ids
-
-        $id = $this->model->insert($data);
-
-        if ($id === false) {
-            return $this->validationFailed($this->model->errors());
+        try {
+            return $this->respondCreated($this->users->create($data));
+        } catch (ValidationFailedException $e) {
+            return $this->validationFailed($e->getErrors());
         }
-
-        return $this->respondCreated($this->model->find($id));
     }
 
     /** PUT /users/{id} -> 200 | 422 | 404 */
     public function update($id = null): ResponseInterface
     {
-        if ($this->model->find($id) === null) {
+        if ($this->users->find((int) $id) === null) {
             return $this->notFound($id);
         }
 
@@ -74,25 +75,21 @@ class Users extends ResourceController
             return $this->invalidJson();
         }
 
-        // Needed by the is_unique[users.email,id,{id}] rule so a user can keep
-        // their own email. "id" is not in $allowedFields, so it is never written.
-        $data['id'] = (int) $id;
-
-        if ($this->model->update($id, $data) === false) {
-            return $this->validationFailed($this->model->errors());
+        try {
+            $user = $this->users->update((int) $id, $data);
+        } catch (ValidationFailedException $e) {
+            return $this->validationFailed($e->getErrors());
         }
 
-        return $this->respond($this->model->find($id));
+        return $user === null ? $this->notFound($id) : $this->respond($user);
     }
 
     /** DELETE /users/{id} -> 204 | 404 */
     public function delete($id = null): ResponseInterface
     {
-        if ($this->model->find($id) === null) {
+        if (! $this->users->delete((int) $id)) {
             return $this->notFound($id);
         }
-
-        $this->model->delete($id);
 
         return $this->response->setStatusCode(204);
     }
