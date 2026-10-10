@@ -1,18 +1,23 @@
 :root {
-  --bg: #f6f7f9;
+  --bg: #f4f6fb;
   --surface: #ffffff;
-  --border: #dfe3e8;
-  --text: #1f2933;
-  --text-muted: #616e7c;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
+  --surface-muted: #f8fafc;
+  --border: #e3e8ef;
+  --border-strong: #cfd6e1;
+  --text: #111827;
+  --text-muted: #5f6b7a;
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-soft: #eef2ff;
   --danger: #dc2626;
   --danger-hover: #b91c1c;
   --danger-bg: #fef2f2;
   --success: #15803d;
   --success-bg: #f0fdf4;
-  --focus: #93c5fd;
-  --radius: 8px;
+  --focus: #a5b4fc;
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgb(16 24 40 / 0.05);
+  --shadow: 0 1px 3px rgb(16 24 40 / 0.06), 0 8px 24px rgb(16 24 40 / 0.06);
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   font-size: 15px;
@@ -20,6 +25,7 @@
   color: var(--text);
   background: var(--bg);
   color-scheme: light;
+  -webkit-font-smoothing: antialiased;
 }
 
 *,
@@ -31,7 +37,9 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: var(--bg);
+  background:
+    radial-gradient(1200px 400px at 50% -120px, #e0e7ff 0%, transparent 70%),
+    var(--bg);
 }
 
 h1,

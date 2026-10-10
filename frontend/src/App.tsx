@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import { Alert } from './components/Alert'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { PlusIcon, RefreshIcon } from './components/Icons'
 import { Modal } from './components/Modal'
 import { Spinner } from './components/Spinner'
 import { UserForm } from './components/UserForm'
@@ -47,16 +48,22 @@ function App() {
     <div className="app">
       <header className="page-header">
         <div>
-          <h1>Users</h1>
-          <p className="subtitle">
-            {isLoading && users.length === 0 ? 'Loading…' : `${users.length} ${users.length === 1 ? 'user' : 'users'}`}
-          </p>
+          <p className="eyebrow">User management</p>
+          <h1>
+            Users
+            <span className="count-badge" aria-label={`${users.length} users`}>
+              {isLoading && users.length === 0 ? '…' : users.length}
+            </span>
+          </h1>
+          <p className="subtitle">Add, edit and remove the people in your system.</p>
         </div>
         <div className="header-actions">
           <button type="button" className="button button-secondary" onClick={reload} disabled={isLoading}>
+            <RefreshIcon />
             Refresh
           </button>
           <button type="button" className="button button-primary" onClick={openCreate}>
+            <PlusIcon />
             Add user
           </button>
         </div>
