@@ -1,0 +1,7 @@
+# Each part has its own .gitignore (backend/.gitignore, frontend/.gitignore).
+# These are repo-wide safety nets.
+.env
+vendor/
+node_modules/
+.DS_Store
+Thumbs.db
